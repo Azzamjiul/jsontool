@@ -7,6 +7,8 @@ function App() {
   const [formattedJson, setFormattedJson] = useState('')
   const [error, setError] = useState('')
   const [url, setUrl] = useState('')
+  
+  // Remove height state variables as we'll use native resizing
 
   const validateAndFormat = () => {
     try {
@@ -154,7 +156,7 @@ function App() {
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
                 placeholder={mode === 'validator' ? 'Paste your JSON here or load from URL...' : mode === 'stringify' ? 'Paste your JS object here (e.g., { key: "value" })...' : 'Paste your JSON string here...'}
-                className="w-full h-80 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out resize-y shadow-sm"
+                className="w-full h-80 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out resize-both min-h-[200px] shadow-sm"
                 spellCheck="false"
               />
               <button
@@ -170,18 +172,18 @@ function App() {
               <label htmlFor="formattedOutput" className="block text-lg font-semibold mb-2 text-gray-700">
                 {mode === 'validator' ? 'Formatted JSON' : mode === 'stringify' ? 'JSON String Output' : 'Parsed JSON Output'}
               </label>
-              <div className="relative w-full h-80 border border-gray-300 rounded-lg bg-gray-50 overflow-hidden shadow-sm">
-                 <pre
-                   id="formattedOutput"
-                   className="absolute inset-0 p-4 font-mono text-sm text-gray-800 overflow-auto whitespace-pre-wrap break-words"
-                 >
-                   {formattedJson || (
-                     <span className="text-gray-400">
-                       {mode === 'validator' ? 'Formatted JSON will appear here...' : mode === 'stringify' ? 'JSON string output will appear here...' : 'Parsed JSON output will appear here...'}
-                     </span>
-                   )}
-                 </pre>
-              </div>
+              <textarea
+                id="formattedOutput"
+                value={formattedJson || (
+                  mode === 'validator' ? 'Formatted JSON will appear here...' : 
+                  mode === 'stringify' ? 'JSON string output will appear here...' : 
+                  'Parsed JSON output will appear here...'
+                )}
+                readOnly
+                className="w-full h-80 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out resize-both min-h-[200px] shadow-sm"
+                spellCheck="false"
+                style={{ color: formattedJson ? 'black' : 'darkgray' }}
+              />
                {formattedJson && (
                  <button
                    onClick={() => navigator.clipboard.writeText(formattedJson)}
