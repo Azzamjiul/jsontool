@@ -70,13 +70,46 @@ function App() {
 
   const stringifyObject = () => {
     try {
-      // eslint-disable-next-line no-eval
-      const obj = eval('(' + jsonInput + ')')
-      setFormattedJson(JSON.stringify(obj, null, 2))
-      setError('')
+      if (!jsonInput.trim()) {
+        setError('Please enter a JavaScript object');
+        return;
+      }
+      
+      // Instead of using Function constructor which is slightly safer
+      // and ensures the code is executed in a separate scope
+      const objectFunction = new Function(`
+        "use strict";
+        try {
+          return ${jsonInput};
+        } catch (e) {
+          throw new Error("Invalid JavaScript object syntax: " + e.message);
+        }
+      `);
+      
+      const obj = objectFunction();
+      
+      // Fix: Check if the input is either an object or null
+      // typeof null returns 'object' in JavaScript, so we need to handle it separately
+      if ((typeof obj !== 'object') && obj !== null) {
+        setError('Input must evaluate to an object, array, or null');
+        return;
+      }
+      
+      // First, convert to JSON string
+      const jsonString = JSON.stringify(obj);
+      
+      // To make the backslashes visible, wrap the JSON string in double quotes
+      // and escape the internal quotes
+      const escapedString = JSON.stringify(jsonString);
+      
+      // Remove the surrounding quotes that JSON.stringify adds
+      const finalString = escapedString.substring(1, escapedString.length - 1);
+      
+      setFormattedJson(finalString);
+      setError('');
     } catch (err) {
-      setError(`Invalid JS object: ${err.message}`)
-      setFormattedJson('')
+      setError(`Invalid JS object: ${err.message}`);
+      setFormattedJson('');
     }
   }
 
