@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 
 function App() {
-  const [mode, setMode] = useState('validator') // 'validator' or 'stringify'
+  const [mode, setMode] = useState('validator') // 'validator', 'stringify', or 'parse'
   const [jsonInput, setJsonInput] = useState('')
   const [formattedJson, setFormattedJson] = useState('')
   const [error, setError] = useState('')
@@ -47,6 +47,27 @@ function App() {
     }
   }
 
+  const parseJson = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setError('Please enter a JSON string')
+        return
+      }
+      // Parse the stringified JSON into an object
+      const parsedObj = JSON.parse(jsonInput)
+      // Format the result as a JavaScript object representation
+      setFormattedJson(
+        typeof parsedObj === 'object' 
+          ? JSON.stringify(parsedObj, null, 2)
+          : String(parsedObj)
+      )
+      setError('')
+    } catch (err) {
+      setError(`Invalid JSON string: ${err.message}`)
+      setFormattedJson('')
+    }
+  }
+
   const clearAll = () => {
     setJsonInput('')
     setFormattedJson('')
@@ -86,6 +107,16 @@ function App() {
             >
               Stringify JS Object
             </button>
+            <button
+              className={`px-5 py-3 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ease-in-out ${
+                mode === 'parse'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+              onClick={() => { setMode('parse'); clearAll(); }}
+            >
+              Parse JSON
+            </button>
           </div>
 
           {/* URL input section */}
@@ -116,28 +147,28 @@ function App() {
             {/* Input Area */}
             <div>
               <label htmlFor="jsonInputArea" className="block text-lg font-semibold mb-2 text-gray-700">
-                {mode === 'validator' ? 'Input JSON' : 'Input JS Object'}
+                {mode === 'validator' ? 'Input JSON' : mode === 'stringify' ? 'Input JS Object' : 'Input JSON String'}
               </label>
               <textarea
                 id="jsonInputArea"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
-                placeholder={mode === 'validator' ? 'Paste your JSON here or load from URL...' : 'Paste your JS object here (e.g., { key: "value" })...'}
+                placeholder={mode === 'validator' ? 'Paste your JSON here or load from URL...' : mode === 'stringify' ? 'Paste your JS object here (e.g., { key: "value" })...' : 'Paste your JSON string here...'}
                 className="w-full h-80 p-4 border border-gray-300 rounded-lg font-mono text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out resize-y shadow-sm"
                 spellCheck="false"
               />
               <button
-                onClick={mode === 'validator' ? validateAndFormat : stringifyObject}
+                onClick={mode === 'validator' ? validateAndFormat : mode === 'stringify' ? stringifyObject : parseJson}
                 className="mt-4 w-full py-2.5 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
               >
-                {mode === 'validator' ? 'Validate & Format' : 'Stringify Object'}
+                {mode === 'validator' ? 'Validate & Format' : mode === 'stringify' ? 'Stringify Object' : 'Parse JSON'}
               </button>
             </div>
 
             {/* Output Area */}
             <div>
               <label htmlFor="formattedOutput" className="block text-lg font-semibold mb-2 text-gray-700">
-                {mode === 'validator' ? 'Formatted JSON' : 'JSON String Output'}
+                {mode === 'validator' ? 'Formatted JSON' : mode === 'stringify' ? 'JSON String Output' : 'Parsed JSON Output'}
               </label>
               <div className="relative w-full h-80 border border-gray-300 rounded-lg bg-gray-50 overflow-hidden shadow-sm">
                  <pre
@@ -146,7 +177,7 @@ function App() {
                  >
                    {formattedJson || (
                      <span className="text-gray-400">
-                       {mode === 'validator' ? 'Formatted JSON will appear here...' : 'JSON string output will appear here...'}
+                       {mode === 'validator' ? 'Formatted JSON will appear here...' : mode === 'stringify' ? 'JSON string output will appear here...' : 'Parsed JSON output will appear here...'}
                      </span>
                    )}
                  </pre>
