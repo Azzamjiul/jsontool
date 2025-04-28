@@ -1,13 +1,44 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [mode, setMode] = useState('validator') // 'validator', 'stringify', or 'parse'
-  const [jsonInput, setJsonInput] = useState('')
-  const [formattedJson, setFormattedJson] = useState('')
-  const [error, setError] = useState('')
-  const [url, setUrl] = useState('')
+  // Initialize state from localStorage if available
+  const [mode, setMode] = useState(() => {
+    return localStorage.getItem('jsonTool.mode') || 'validator'
+  })
   
+  const [jsonInput, setJsonInput] = useState(() => {
+    const savedInputs = JSON.parse(localStorage.getItem('jsonTool.inputs') || '{}')
+    return savedInputs[mode] || ''
+  })
+  
+  const [formattedJson, setFormattedJson] = useState(() => {
+    const savedOutputs = JSON.parse(localStorage.getItem('jsonTool.outputs') || '{}')
+    return savedOutputs[mode] || ''
+  })
+  
+  const [error, setError] = useState('')
+  const [url, setUrl] = useState(() => localStorage.getItem('jsonTool.url') || '')
+  
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    // Save mode
+    localStorage.setItem('jsonTool.mode', mode)
+    
+    // Save inputs for each mode
+    const savedInputs = JSON.parse(localStorage.getItem('jsonTool.inputs') || '{}')
+    savedInputs[mode] = jsonInput
+    localStorage.setItem('jsonTool.inputs', JSON.stringify(savedInputs))
+    
+    // Save outputs for each mode
+    const savedOutputs = JSON.parse(localStorage.getItem('jsonTool.outputs') || '{}')
+    savedOutputs[mode] = formattedJson
+    localStorage.setItem('jsonTool.outputs', JSON.stringify(savedOutputs))
+    
+    // Save URL for validator mode
+    localStorage.setItem('jsonTool.url', url)
+  }, [mode, jsonInput, formattedJson, url])
+
   // Remove height state variables as we'll use native resizing
 
   const validateAndFormat = () => {
@@ -71,10 +102,37 @@ function App() {
   }
 
   const clearAll = () => {
+    // Only clear data for the current mode
     setJsonInput('')
     setFormattedJson('')
     setError('')
-    setUrl('')
+    if (mode === 'validator') {
+      setUrl('')
+    }
+  }
+
+  // Get saved input when mode changes
+  const handleModeChange = (newMode) => {
+    // Don't do anything if it's the same mode
+    if (newMode === mode) return
+    
+    // Save current state first
+    const savedInputs = JSON.parse(localStorage.getItem('jsonTool.inputs') || '{}')
+    savedInputs[mode] = jsonInput
+    
+    const savedOutputs = JSON.parse(localStorage.getItem('jsonTool.outputs') || '{}')
+    savedOutputs[mode] = formattedJson
+    
+    localStorage.setItem('jsonTool.inputs', JSON.stringify(savedInputs))
+    localStorage.setItem('jsonTool.outputs', JSON.stringify(savedOutputs))
+    
+    // Update mode
+    setMode(newMode)
+    
+    // Load saved state for the new mode
+    setJsonInput(savedInputs[newMode] || '')
+    setFormattedJson(savedOutputs[newMode] || '')
+    setError('')
   }
 
   return (
@@ -95,7 +153,7 @@ function App() {
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
-              onClick={() => { setMode('validator'); clearAll(); }}
+              onClick={() => handleModeChange('validator')}
             >
               Validate & Format
             </button>
@@ -105,7 +163,7 @@ function App() {
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
-              onClick={() => { setMode('stringify'); clearAll(); }}
+              onClick={() => handleModeChange('stringify')}
             >
               Stringify JS Object
             </button>
@@ -115,7 +173,7 @@ function App() {
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
-              onClick={() => { setMode('parse'); clearAll(); }}
+              onClick={() => handleModeChange('parse')}
             >
               Parse JSON
             </button>
